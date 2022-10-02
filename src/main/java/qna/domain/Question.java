@@ -1,11 +1,40 @@
 package qna.domain;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Entity
 public class Question {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String title;
+
     private String contents;
-    private Long writerId;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name="user_id")
+    private User writer;
+
     private boolean deleted = false;
+
+    @CreatedDate
+    private Date createdAt;
+
+    @LastModifiedDate
+    private Date updatedAt;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    List<Answer> answers = new ArrayList<>();
+
+    public Question() {
+    }
 
     public Question(String title, String contents) {
         this(null, title, contents);
@@ -17,17 +46,29 @@ public class Question {
         this.contents = contents;
     }
 
+    public List<Answer> getAnswers() {
+        return answers;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
     public Question writeBy(User writer) {
-        this.writerId = writer.getId();
+        this.writer = writer;
         return this;
     }
 
     public boolean isOwner(User writer) {
-        return this.writerId.equals(writer.getId());
+        return this.writer == writer;
     }
 
     public void addAnswer(Answer answer) {
-        answer.toQuestion(this);
+        this.answers.add(answer);
     }
 
     public Long getId() {
@@ -54,13 +95,6 @@ public class Question {
         this.contents = contents;
     }
 
-    public Long getWriterId() {
-        return writerId;
-    }
-
-    public void setWriterId(Long writerId) {
-        this.writerId = writerId;
-    }
 
     public boolean isDeleted() {
         return deleted;
@@ -70,14 +104,11 @@ public class Question {
         this.deleted = deleted;
     }
 
-    @Override
-    public String toString() {
-        return "Question{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", contents='" + contents + '\'' +
-                ", writerId=" + writerId +
-                ", deleted=" + deleted +
-                '}';
+    public User getWriter() {
+        return writer;
+    }
+
+    public void linkUser(User user) {
+        this.writer = user;
     }
 }

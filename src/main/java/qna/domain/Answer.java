@@ -1,16 +1,52 @@
 package qna.domain;
 
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import qna.NotFoundException;
 import qna.UnAuthorizedException;
 
+import javax.persistence.*;
+
+import java.net.UnknownServiceException;
+import java.util.Date;
 import java.util.Objects;
 
+@Entity
+@EntityListeners(AuditingEntityListener.class)
 public class Answer {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long writerId;
-    private Long questionId;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    private User writer;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Question question;
+
+    @Lob
     private String contents;
+
+    @CreatedDate
+    private Date createAt;
+
+    @LastModifiedDate
+    private Date updateAt;
+
+    public Date getUpdateAt() {
+        return updateAt;
+    }
+
+    public Date getCreateAt() {
+        return createAt;
+    }
+
     private boolean deleted = false;
+
+    public Answer() {
+    }
 
     public Answer(User writer, Question question, String contents) {
         this(null, writer, question, contents);
@@ -27,17 +63,25 @@ public class Answer {
             throw new NotFoundException();
         }
 
-        this.writerId = writer.getId();
-        this.questionId = question.getId();
+        this.writer = writer;
+        this.question = question;
         this.contents = contents;
     }
 
     public boolean isOwner(User writer) {
-        return this.writerId.equals(writer.getId());
+        return this.writer == writer;
     }
 
     public void toQuestion(Question question) {
-        this.questionId = question.getId();
+        this.question = question;
+    }
+
+    public User getWriter() {
+        return writer;
+    }
+
+    public Question getQuestion() {
+        return question;
     }
 
     public Long getId() {
@@ -48,21 +92,6 @@ public class Answer {
         this.id = id;
     }
 
-    public Long getWriterId() {
-        return writerId;
-    }
-
-    public void setWriterId(Long writerId) {
-        this.writerId = writerId;
-    }
-
-    public Long getQuestionId() {
-        return questionId;
-    }
-
-    public void setQuestionId(Long questionId) {
-        this.questionId = questionId;
-    }
 
     public String getContents() {
         return contents;
@@ -80,14 +109,4 @@ public class Answer {
         this.deleted = deleted;
     }
 
-    @Override
-    public String toString() {
-        return "Answer{" +
-                "id=" + id +
-                ", writerId=" + writerId +
-                ", questionId=" + questionId +
-                ", contents='" + contents + '\'' +
-                ", deleted=" + deleted +
-                '}';
-    }
 }
